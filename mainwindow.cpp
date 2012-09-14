@@ -57,12 +57,15 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
 
     combo->addItems(list);
     combo->insertSeparator(combo->count() - 1);
+    combo->setTabOrder(NULL,NULL);
 
     connect(combo,SIGNAL(activated(int)),this,SLOT(ComboChanged(int)));
 
 
     edit = new QTextEdit(this);
     edit->setGeometry(10,60,150,25);
+    edit->setTabChangesFocus(true);
+
     connect (edit,SIGNAL(textChanged()),this,SLOT(EditChanged()));
 
     QLabel * naame;
@@ -78,12 +81,15 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
 
     editPrikaz = new QTextEdit(this);
     editPrikaz->setGeometry(10,100,150,25);
+    editPrikaz->setTabChangesFocus(true);
+
     connect (editPrikaz,SIGNAL(textChanged()),this,SLOT(EditChanged()));
 
     button = new QPushButton(this);
     button->setGeometry(200,15,80,120);
     button->setText(QString::fromUtf8("Přidat"));
     button->setDisabled(true);
+
 
     connect(button,SIGNAL(clicked()),this,SLOT(buttonClicked()));
 
@@ -290,7 +296,10 @@ void MainWindow::dropEvent(QDropEvent *event)
     {
         editPrikaz->setText("evince");
         QFile source(file);
-        QString newfile = PDF + "/" + temp;
+
+        QDir dir;
+        dir.mkdir(PDF + "/" + combo->currentText());
+        QString newfile = PDF + "/" + combo->currentText() + "/" + temp;
         source.copy(newfile);
         path = newfile;
         tempstring.icon = PDF + "/images.jpg";
