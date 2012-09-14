@@ -11,8 +11,11 @@
 #include "QMenu"
 #include "QDebug"
 #include "qactionkrida.h"
+#include <QLabel>
 
-#define KONFIGURAK tr(".xrandr_conf")
+#define KONFIGURAK "krida_conf"
+#define ADRESAR ".krida"
+#define PDF  (QDir::homePath() + "/" + ADRESAR + "/" + "pdf")
 
 class menuKrida : public QMenu
 {
@@ -57,6 +60,7 @@ private:
       QString path;
       QTextEdit * editPrikaz;
 
+
     QMenu * MenuMazani;
 
     struct tempstring
@@ -64,6 +68,7 @@ private:
         QString text;
         QString menu;
         QString command;
+        QString icon;
     } tempstring;
 
       void createTray(void);
@@ -93,8 +98,8 @@ protected slots:
       void menu_callback(QString & command);
       void buttonClicked(void);
       void MenuHover(QActionKrida & action);
-
       void MenuMazatTrigger(QAction * action);
+      void ComboChanged(int index);
 
 public slots:
       void popni  (QString text, QString menu_l , QString command, QPoint pint);

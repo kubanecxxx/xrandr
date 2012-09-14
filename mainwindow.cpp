@@ -21,6 +21,7 @@
 #include "QApplication"
 #include "QClipboard"
 #include "QStyle"
+#include "QInputDialog"
 
 
 MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
@@ -52,12 +53,28 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
     for (int i = 0 ; i < menu.submenu.length() ; i++)
         list.push_back(menu.submenu.at(i).nazevSubmenu);
 
+    list.push_back("Noj");
 
     combo->addItems(list);
+    combo->insertSeparator(combo->count() - 1);
+
+    connect(combo,SIGNAL(activated(int)),this,SLOT(ComboChanged(int)));
+
 
     edit = new QTextEdit(this);
     edit->setGeometry(10,60,150,25);
     connect (edit,SIGNAL(textChanged()),this,SLOT(EditChanged()));
+
+    QLabel * naame;
+    QLabel * priikaz;
+
+    naame = new QLabel(this);
+    naame->setText(QString::fromUtf8("Náme:"));
+    naame->setGeometry(10,40,150,25);
+
+    priikaz = new QLabel(this);
+    priikaz->setText(QString::fromUtf8("Přikaz:"));
+    priikaz->setGeometry(10,80,150,25);
 
     editPrikaz = new QTextEdit(this);
     editPrikaz->setGeometry(10,100,150,25);
@@ -79,7 +96,10 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
 
     connect(MenuMazani,SIGNAL(triggered(QAction*)),this,SLOT(MenuMazatTrigger(QAction*)));
 
-    QString home = QDir::homePath();
+    QDir dir;
+    QString home = dir.homePath();
+    dir.mkdir(home + "/" + ADRESAR);
+    dir.mkdir(PDF);
 }
 
 void MainWindow::MenuMazatTrigger(QAction * action)
@@ -211,8 +231,12 @@ void MainWindow::closeEvent(QCloseEvent *event)
     }
     else
     {
+        tempstring.icon.clear();
         event->ignore();
         setHidden(true);
+        path.clear();
+        edit->clear();
+        editPrikaz->clear();
     }
 }
 
@@ -221,6 +245,16 @@ void MainWindow::refreshMenu()
     menu.submenu.clear();
     menu.primo.clear();
     readXml();
+
+    QStringList list;
+    list.push_back("Main");
+    for (int i = 0 ; i < menu.submenu.length() ; i++)
+        list.push_back(menu.submenu.at(i).nazevSubmenu);
+
+    list.push_back("Noj");
+    combo->clear();
+    combo->addItems(list);
+    combo->insertSeparator(combo->count() - 1);
 
     seznamMenu.clear();
     menu2qmenu();
@@ -247,16 +281,27 @@ void MainWindow::dropEvent(QDropEvent *event)
     if (file.isEmpty())
         return;
 
-    if (file.endsWith(".pdf",Qt::CaseInsensitive))
-        editPrikaz->setText("evince");
-    else
-        editPrikaz->clear();
-
     path = file;
     int i = path.lastIndexOf('/');
     QString temp = path.right(path.length() - i - 1);
-    temp = temp.left( temp.length() -  4);
 
+
+    if (file.endsWith(".pdf",Qt::CaseInsensitive))
+    {
+        editPrikaz->setText("evince");
+        QFile source(file);
+        QString newfile = PDF + "/" + temp;
+        source.copy(newfile);
+        path = newfile;
+        tempstring.icon = PDF + "/images.jpg";
+    }
+    else
+    {
+        editPrikaz->clear();
+    }
+
+
+    temp = temp.left( temp.length() -  4);
     edit->setText(temp);
     edit->selectAll();
     edit->setFocus();
@@ -274,9 +319,10 @@ void MainWindow::buttonClicked()
 {
     menuTypedef polozka;
 
-    polozka.Icon = "";
+    polozka.Icon = tempstring.icon;
     polozka.polozka = edit->toPlainText();
     polozka.systemCommmand = editPrikaz->toPlainText() +" " + path;
+
 
     for (int i = 0 ; i < menu.submenu.size(); i++)
     {
@@ -293,9 +339,12 @@ void MainWindow::buttonClicked()
         }
     }
 
-    edit->setDisabled(true);
-    combo->setDisabled(true);
+    tempstring.icon.clear();
+    path.clear();
     button->setDisabled(true);
+    edit->clear();
+    editPrikaz->clear();
+
     setHidden(true);
 
     saveXml();
@@ -468,7 +517,7 @@ void MainWindow::saveXml()
 
     QFile file(xml);
 
-    if (!file.open(QIODevice::ReadWrite | QIODevice::Text))
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text ))
     {
         qErrnoWarning("Neni soubor xml pro menu");
         exit(1);
@@ -485,7 +534,7 @@ void MainWindow::saveXml()
 void MainWindow::readConf(void)
 {
     QString home = QDir::homePath();
-    home += tr("/") + KONFIGURAK;
+    home += QString("/") + ADRESAR + "/" + KONFIGURAK;
     QFile file(home);
 
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -514,11 +563,40 @@ void MainWindow::conffileLine(QString &line,const QString & data, QString & kam)
     if (line.startsWith(data))
     {
         line.remove (data + tr(" "));
-        if (line.startsWith(tr("~")))
+        if (QDir::isRelativePath(line))
         {
-            line.remove(0,1);
-            line.insert(0,QDir::homePath());
+            if (line.startsWith(tr("~")))
+            {
+                line.remove(0,1);
+                line.insert(0,QDir::homePath());
+            }
+            else
+            {
+                 line.insert(0,QDir::homePath() + "/" + ADRESAR + "/");
+            }
         }
         kam = line;
+    }
+}
+
+void MainWindow::ComboChanged(int index)
+{
+    if(index == combo->count() - 1)
+    {
+        QInputDialog dialog;
+        dialog.setLabelText(QString::fromUtf8("Napiš méno novyho submenu"));
+
+        int ret = dialog.exec();
+
+        if (ret == QInputDialog::Accepted)
+        {
+            menuItemTypedef noj;
+            noj.nazevSubmenu = dialog.textValue();
+
+            menu.submenu.push_back(noj);
+
+            saveXml();
+            refreshMenu();
+        }
     }
 }
