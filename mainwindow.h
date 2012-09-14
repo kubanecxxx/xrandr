@@ -54,6 +54,7 @@ private:
       QString icon;
       QString xml;
       QString logg;
+      QString filemanager;
       QComboBox * combo;
       QPushButton * button;
       QTextEdit * edit;

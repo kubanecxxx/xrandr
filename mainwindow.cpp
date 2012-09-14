@@ -464,13 +464,20 @@ void MainWindow::createTray(void)
 
 void MainWindow::tray_clicked(QSystemTrayIcon::ActivationReason reason)
 {
-    if (reason != QSystemTrayIcon::DoubleClick)
-        return;
+    if (reason == QSystemTrayIcon::MiddleClick)
+    {
 
     if (isHidden())
         show();
     else
-        hide();
+       hide();
+    }
+    else if (reason == QSystemTrayIcon::DoubleClick)
+    {
+        QString comm = filemanager+ " " + PDF + "&";
+        system(comm.toAscii() );
+    }
+
 }
 
 void MainWindow::menu_callback(QString & command)
@@ -562,6 +569,7 @@ void MainWindow::readConf(void)
         conffileLine(line,tr("menu"),xml);
         conffileLine(line,tr("icon"),icon);
         conffileLine(line,tr("logg"),logg);
+        conffileLine(line,"filemanager",filemanager);
 
     }
     file.close();
