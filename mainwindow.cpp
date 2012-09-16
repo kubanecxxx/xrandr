@@ -492,9 +492,24 @@ void MainWindow::menu_callback(QString & command)
         QTextStream stream(&file);
         QDateTime cas = QDateTime::currentDateTime();
 
-        //QProcess proces;
-        //proces.execute(command);
-        //command += "&";
+        bool uz = false;
+        for (int i = 0 ; i < command.length(); i++)
+        {
+
+            if (command[i] == '/')
+                uz = true;
+
+            if (uz)
+            {
+                if (command[i] == ' ')
+                {
+                    command[i] = '\\';
+                    command.insert(++i ,' ');
+                }
+            }
+
+        }
+
         system((command + '&').toAscii());
 
         stream << cas.toString("dd.MM.yyyy hh:mm:ss")
