@@ -23,6 +23,37 @@
 #include "QStyle"
 #include "QInputDialog"
 
+#include <QLocalSocket>
+
+void MainWindow::connected()
+{
+    soc = server->nextPendingConnection();
+    connect(soc,SIGNAL(readyRead()),this,SLOT(readyRead()));
+}
+
+void MainWindow::readyRead()
+{
+    QString str = soc->readAll();
+
+    qDebug() << str;
+
+    QString file = str;
+    QFile fn(file);
+
+    if(!fn.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        return;
+    }
+
+    QTextStream in(&fn);
+    QString name = in.readLine();
+    QString zbytek =(in.readAll());
+
+    fn.close();
+
+    //tray->showMessage(name,zbytek,QSystemTrayIcon::NoIcon,10000);
+    pop->notify(name,zbytek);
+}
 
 MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
     : QMainWindow(parent,flags)
@@ -30,6 +61,17 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
     menu.submenu.clear();
     menu.primo.clear();
     qmenu = NULL;
+
+    QString fil = QString("/tmp/") + QString(SERVER);
+    QFile file(fil);
+
+    if(file.exists())
+        file.remove();
+
+    server = new QLocalServer;
+    server->listen(SERVER);
+
+    connect(server,SIGNAL(newConnection()),this,SLOT(connected()));
 
     readConf();
     readXml();
@@ -106,6 +148,11 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
     QString home = dir.homePath();
     dir.mkdir(home + "/" + ADRESAR);
     dir.mkdir(PDF);
+
+
+    pop = new popup(this);
+    connect(pop,SIGNAL(wantShow(bool)), this,SLOT(setShown(bool)));
+
 }
 
 void MainWindow::MenuMazatTrigger(QAction * action)
@@ -271,7 +318,7 @@ void MainWindow::refreshMenu()
 
 MainWindow::~MainWindow()
 {
-    
+    delete(server);
 }
 
 void MainWindow::dropEvent(QDropEvent *event)
@@ -477,6 +524,14 @@ void MainWindow::tray_clicked(QSystemTrayIcon::ActivationReason reason)
         QString comm = filemanager+ " " + PDF + "&";
         system(comm.toAscii() );
     }
+
+#ifdef QT_DEBUG
+    else if (reason == QSystemTrayIcon::Trigger)
+    {
+        pop->notify(QString("head"),QString("zbytrek"));
+    }
+#endif
+
 
 }
 

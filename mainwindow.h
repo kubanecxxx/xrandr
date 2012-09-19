@@ -12,10 +12,15 @@
 #include "QDebug"
 #include "qactionkrida.h"
 #include <QLabel>
+#include <QLocalServer>
+
+#include "popup.h"
 
 #define KONFIGURAK "krida_conf"
 #define ADRESAR ".krida"
 #define PDF  (QDir::homePath() + "/" + ADRESAR + "/" + "pdf")
+#define SERVER "SERVER"
+#define SERVER_CELEJ "/tmp/SERVER"
 
 class menuKrida : public QMenu
 {
@@ -61,6 +66,11 @@ private:
       QString path;
       QTextEdit * editPrikaz;
 
+      QLocalServer * server;
+      QLocalSocket * soc;
+
+      popup *  pop;
+
 
     QMenu * MenuMazani;
 
@@ -86,9 +96,6 @@ private:
       void dropEvent(QDropEvent * event);
       void dragEnterEvent(QDragEnterEvent * event);
       void closeEvent(QCloseEvent * event);
-
-
-      void popup(const QPoint & pt);
       void Smazat(QString & polozka, QString & menu);
 
 protected slots:
@@ -101,6 +108,9 @@ protected slots:
       void MenuHover(QActionKrida & action);
       void MenuMazatTrigger(QAction * action);
       void ComboChanged(int index);
+
+      void connected();
+      void readyRead(void);
 
 public slots:
       void popni  (QString text, QString menu_l , QString command, QPoint pint);
