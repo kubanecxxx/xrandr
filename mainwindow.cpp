@@ -104,11 +104,12 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
     connect(combo,SIGNAL(activated(int)),this,SLOT(ComboChanged(int)));
 
 
-    edit = new QTextEdit(this);
+    edit = new QLineEdit(this);
     edit->setGeometry(10,60,150,25);
-    edit->setTabChangesFocus(true);
+    edit->setDragEnabled(false);
+    //edit->setTabChangesFocus(true);
 
-    connect (edit,SIGNAL(textChanged()),this,SLOT(EditChanged()));
+    connect (edit,SIGNAL(textChanged(QString)),this,SLOT(EditChanged(QString)));
 
     QLabel * naame;
     QLabel * priikaz;
@@ -121,11 +122,12 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
     priikaz->setText(QString::fromUtf8("Přikaz:"));
     priikaz->setGeometry(10,80,150,25);
 
-    editPrikaz = new QTextEdit(this);
+    editPrikaz = new QLineEdit(this);
     editPrikaz->setGeometry(10,100,150,25);
-    editPrikaz->setTabChangesFocus(true);
+    editPrikaz->setDragEnabled(false);
+    //editPrikaz->setTabChangesFocus(true);
 
-    connect (editPrikaz,SIGNAL(textChanged()),this,SLOT(EditChanged()));
+    connect (editPrikaz,SIGNAL(textChanged(QString)),this,SLOT(EditChanged(QString)));
 
     button = new QPushButton(this);
     button->setGeometry(200,15,80,120);
@@ -341,19 +343,19 @@ void MainWindow::dropEvent(QDropEvent *event)
 
     if (file.endsWith(".pdf",Qt::CaseInsensitive))
     {
-        editPrikaz->setText("evince");
-        QFile source(file);
+        newFile = temp;
+        oldFile = file;
 
-        QDir dir;
-        dir.mkdir(PDF + "/" + combo->currentText());
-        QString newfile = PDF + "/" + combo->currentText() + "/" + temp;
-        source.copy(newfile);
-        path = newfile;
+        editPrikaz->setText("okular");
         tempstring.icon = PDF + "/images.jpg";
+        neco = true;
+
+
     }
     else
     {
         editPrikaz->clear();
+        neco = false;
     }
 
 
@@ -363,9 +365,9 @@ void MainWindow::dropEvent(QDropEvent *event)
     edit->setFocus();
 }
 
-void MainWindow::EditChanged()
+void MainWindow::EditChanged(QString)
 {
-    if (!edit->toPlainText().isEmpty() && !editPrikaz->toPlainText().isEmpty())
+    if (!edit->text().isEmpty() && !editPrikaz->text().isEmpty())
         button->setEnabled(true);
     else
         button->setDisabled(true);
@@ -375,9 +377,22 @@ void MainWindow::buttonClicked()
 {
     menuTypedef polozka;
 
+    if (neco)
+    {
+        QFile source(oldFile);
+        QDir dir;
+        QString newDir = PDF + "/" + combo->currentText();
+        dir.mkdir(newDir);
+
+        newFile = PDF + "/" + combo->currentText() + "/" + edit->text() + ".pdf";
+        source.copy(newFile);
+        path = newFile;
+        neco = false;
+    }
+
     polozka.Icon = tempstring.icon;
-    polozka.polozka = edit->toPlainText();
-    polozka.systemCommmand = editPrikaz->toPlainText() +" " + path;
+    polozka.polozka = edit->text();
+    polozka.systemCommmand = editPrikaz->text() +" " + path;
 
 
     for (int i = 0 ; i < menu.submenu.size(); i++)

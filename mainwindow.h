@@ -62,15 +62,18 @@ private:
       QString filemanager;
       QComboBox * combo;
       QPushButton * button;
-      QTextEdit * edit;
+      QLineEdit * edit;
       QString path;
-      QTextEdit * editPrikaz;
+      QLineEdit * editPrikaz;
 
       QLocalServer * server;
       QLocalSocket * soc;
 
       popup *  pop;
 
+      QString newFile;
+      QString oldFile;
+      bool neco;
 
     QMenu * MenuMazani;
 
@@ -99,7 +102,7 @@ private:
       void Smazat(QString & polozka, QString & menu);
 
 protected slots:
-      void EditChanged(void);
+      void EditChanged(QString);
       void refreshMenu(void);
       void chumaj (void);
       void tray_clicked (QSystemTrayIcon::ActivationReason);
